@@ -1,30 +1,25 @@
 package pubsub
 
 import (
-	"encoding/json"
+	"bytes"
+	"encoding/gob"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type Acktype int
-
-const (
-	Ack Acktype = iota
-	NackRequeue
-	NackDiscard
-)
-
-func SubscribeJSON[T any](
+func SubscribeGOB[T any](
 	conn *amqp.Connection,
 	exchange,
 	queueName,
 	key string,
-	queueType SimpleQueueType,
+	simpleQueueType SimpleQueueType,
 	handler func(T) Acktype,
 ) error {
-	err := subscribe(conn, exchange, queueName, key, queueType, handler, func(data []byte) (T, error) {
+	err := subscribe(conn, exchange, queueName, key, simpleQueueType, handler, func(data []byte) (T, error) {
+		buffer := bytes.NewBuffer(data)
 		var target T
-		err := json.Unmarshal(data, &target)
+		decoder := gob.NewDecoder(buffer)
+		err := decoder.Decode(&target)
 		if err != nil {
 			return target, err
 		}

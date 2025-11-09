@@ -25,13 +25,18 @@ func main() {
 		log.Fatal(err)
 		return
 	}
-	_, _, err = pubsub.DeclareAndBind(
+	err = pubsub.SubscribeGOB(
 		conn,
 		routing.ExchangePerilTopic,
 		"game_logs",
-		routing.GameLogSlug,
+		routing.GameLogSlug+".*",
 		pubsub.DURABLE,
+		handlerLogs(),
 	)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
 	gamelogic.PrintServerHelp()
 	for {
 		input := gamelogic.GetInput()
@@ -46,7 +51,7 @@ func main() {
 			pubsub.PublishJSON(chann, routing.ExchangePerilDirect, routing.PauseKey, routing.PlayingState{IsPaused: false})
 			continue
 		case "quit":
-			break
+			return
 		default:
 			continue
 		}

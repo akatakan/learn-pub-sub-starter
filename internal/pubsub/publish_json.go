@@ -22,11 +22,11 @@ func PublishJSON[T any](ch *amqp.Channel, exchange, key string, val T) error {
 	return nil
 }
 
-type SimpleQueueType string
+type SimpleQueueType int
 
 const (
-	DURABLE   SimpleQueueType = "durable"
-	TRANSIENT SimpleQueueType = "transient"
+	DURABLE SimpleQueueType = iota
+	TRANSIENT
 )
 
 func DeclareAndBind(
@@ -40,7 +40,7 @@ func DeclareAndBind(
 	if err != nil {
 		return nil, amqp.Queue{}, err
 	}
-	queue, err := newChann.QueueDeclare(queueName, queueType == DURABLE, queueType == TRANSIENT, queueType == TRANSIENT, false, nil)
+	queue, err := newChann.QueueDeclare(queueName, queueType == DURABLE, queueType == TRANSIENT, queueType == TRANSIENT, false, amqp.Table{"x-dead-letter-exchange": "peril_dlx"})
 	if err != nil {
 		return nil, amqp.Queue{}, err
 	}
